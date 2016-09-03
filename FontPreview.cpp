@@ -9,7 +9,7 @@ inline FT_Int round_trunc(FT_Int fixed) {
 }
 
 FontPreview::FontPreview(QWidget* parent)
-	: QWidget(parent), m_face(0), m_library(0),
+	: QWidget(parent), m_library(0), m_face(0),
 	  m_fontSize(16 << 6), m_forceAutoHint(false),
 	  m_hinting(true), m_renderMode(Normal) {
 	QPalette pal(palette());
@@ -122,9 +122,15 @@ void FontPreview::paintEvent(QPaintEvent* event) {
 		renderMode = FT_RENDER_MODE_NORMAL;
 	}
 
-	for (QString::iterator itr = m_text.begin(), end = m_text.end();
-		 itr != end; itr++) {
+	for (auto itr = m_text.begin(), end = m_text.end(); itr != end; itr++) {
 		QChar c = *itr;
+
+		if (c == QChar::LineFeed) {
+			pen_y = m_face->size->metrics.height;
+			pen_x = 0;
+			continue;
+		}
+
 		FT_UInt glyph_index = FT_Get_Char_Index(m_face, c.unicode());
 		error = FT_Load_Glyph(m_face, glyph_index,
 							  loadFlag);
@@ -143,14 +149,19 @@ void FontPreview::paintEvent(QPaintEvent* event) {
 		glyphImage.setColorTable(colorTable);
 		int x = round_trunc(pen_x) + g->bitmap_left;
 		int y = trunc(pen_y) - g->bitmap_top;
-		std::cout << (wchar_t)c.unicode() << ": ";
-		std::cout << x << ", " << y << std::endl;
+
+		QString current(c);
+		std::cout << current.toUtf8().constData();
+		std::cout << ": ";
+		std::cout << x << ", " << y;
+		std::cout << " advance: (" << g->advance.x << ", " << g->advance.y << ")";
+		std::cout << " height: " << g->metrics.height;
+		std::cout << " Global height: " << m_face->size->metrics.height << std::endl;
+
 		painter.drawImage(QPoint(x, y),
 						  glyphImage);
 		pen_x += g->advance.x;
 	}
-	
-	
 
 //	painter.translate(m_glyphRect.x(),
 //					  m_glyphRect.y());

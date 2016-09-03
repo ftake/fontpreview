@@ -2,6 +2,7 @@
 #include <QtGui/QApplication>
 #include <QWidget>
 #include <QPainter>
+#include <QChar>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
